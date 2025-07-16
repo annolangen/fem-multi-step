@@ -1,0 +1,32 @@
+{
+  "name": "fem-multi-step",
+  "version": "1.0.0",
+  "description": "![Design preview for the Multi-step form coding challenge](preview.jpg)",
+  "scripts": {
+    "format": "prettier --write \"src/**/*.{css,ts,html}\"",
+    "build": "parcel build --public-url ./ src/index.html",
+    "dev": "parcel src/index.html",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/annolangen/fem-multi-step.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/annolangen/fem-multi-step/issues"
+  },
+  "homepage": "https://github.com/annolangen/fem-multi-step#readme",
+  "dependencies": {
+    "@tailwindcss/postcss": "^4.1.11",
+    "lit-html": "^3.3.1",
+    "tailwindcss": "^4.1.11"
+  },
+  "devDependencies": {
+    "parcel": "^2.15.4",
+    "prettier": "^3.6.2"
+  }
+}
