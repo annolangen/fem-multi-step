@@ -25,14 +25,21 @@ interface State {
 }
 const state: State = { step: 1, schedule: "monthly", addons: [] };
 
-const labeledInputHtml = (label: string, placeholder: string) => html`
-  <p class="mx-4 mt-4 font-semibold text-blue-950">${label}</p>
-  <input
-    class="mx-4 border rounded-sm p-2"
-    type="text"
-    placeholder=${placeholder}
-  />
-`;
+function labeledInputHtml(label: string, placeholder: string, key: string) {
+  function oninput(this: HTMLInputElement) {
+    state[key] = this.value;
+  }
+
+  return html`
+    <p class="mx-4 mt-4 font-semibold text-blue-950">${label}</p>
+    <input
+      class="mx-4 border rounded-sm p-2"
+      type="text"
+      placeholder=${placeholder}
+      @oninput=${oninput}
+    />
+  `;
+}
 
 const pageHtml = () =>
   html` <main class="flex flex-col min-h-screen bg-blue-100">
@@ -60,24 +67,20 @@ const pageHtml = () =>
         <p class="mx-4 mt-4 text-xl text-gray-500">
           Please provide your name, email address, and phone number.
         </p>
-        ${labeledInputHtml("Name", "e.g. Stephen King")}
-        ${labeledInputHtml("Email Address", "e.g. stephenking@lorem.com")}
-        ${labeledInputHtml("Phone Number", "e.g. +1 234 567 890")}
+        ${labeledInputHtml("Name", "e.g. Stephen King", "name")}
+        ${labeledInputHtml("Email Address", "e.g. stephenking@lorem.com", "email")}
+        ${labeledInputHtml("Phone Number", "e.g. +1 234 567 890", "phone")}
         <div class="mb-4">
       </section>
       <div class="flex-grow"></div>
       <section class="bg-white p-4 flex justify-end">
-        <button class="bg-blue-950 text-white px-4 py-2 rounded-md">
+        <button class="bg-blue-950 text-white px-4 py-2 rounded-md" @click=${() => {
+          state.step++;
+        }}>
           Next Step
         </button>
       </section>
-    </main>
-    <div class="attribution bottom-0">
-      Challenge by
-      <a href="https://www.frontendmentor.io?ref=challenge" target="_blank"
-        >Frontend Mentor </a
-      >. Coded by <a href="#">Your Name Here</a>.
-    </div>`;
+    </main>`;
 
 const page = html`
   <!-- Sidebar start -->
@@ -130,5 +133,5 @@ const page = html`
 `;
 
 const renderBody = () => render(pageHtml(), document.body);
-window.onchange = window.onclick = renderBody;
+window.onchange = window.onclick = window.oninput = renderBody;
 renderBody();
