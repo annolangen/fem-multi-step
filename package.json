@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "![Design preview for the Multi-step form coding challenge](preview.jpg)",
   "scripts": {
-    "format": "prettier --write \"src/**/*.{css,ts,html}\"",
+    "format": "prettier --write \"src/**/*.{ts,html}\"",
     "build": "parcel build --public-url ./ src/index.html",
     "dev": "parcel src/index.html",
     "test": "echo \"Error: no test specified\" && exit 1"
