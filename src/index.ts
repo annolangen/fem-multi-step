@@ -125,16 +125,32 @@ const plans: Plan[] = [
 ];
 
 const planHtml = (plan: Plan) =>
-  html` <div class="mx-4 my-2 border rounded-lg flex flex-row">
-    <div class="m-4">${plan.icon}</div>
-    <div class="flex flex-grow flex-col">
-      <p class="mx-4 mt-4 font-semibold text-blue-950">${plan.name}</p>
-      <p class="mx-4 text-gray-500">
-        &dollar;${plan[state.schedule]}/${monthlyBilling() ? "mo" : "yr"}
-      </p>
-      ${monthlyBilling() ? null : html`<p class="mx-4">2 months free</p>`}
+  html`<label class="cursor-pointer">
+    <input
+      type="radio"
+      name="plan"
+      class="sr-only"
+      .checked=${state.plan === plan}
+      @click=${() => (state.plan = plan)}
+    />
+    <div
+      class="mx-4 my-2 border rounded-lg flex flex-row border-grey-500 hover:border-purple-600 ${classMap(
+        {
+          "border-purple-600": state.plan === plan,
+          "bg-blue-100": state.plan === plan,
+        }
+      )}"
+    >
+      <div class="m-4">${plan.icon}</div>
+      <div class="flex flex-grow flex-col">
+        <p class="mx-4 mt-4 font-semibold text-blue-950">${plan.name}</p>
+        <p class="mx-4 text-gray-500">
+          &dollar;${plan[state.schedule]}/${monthlyBilling() ? "mo" : "yr"}
+        </p>
+        ${monthlyBilling() ? null : html`<p class="mx-4">2 months free</p>`}
+      </div>
     </div>
-  </div>`;
+  </label>`;
 
 const billingToggle = () =>
   html` <label
@@ -149,13 +165,12 @@ const billingToggle = () =>
     >
       Monthly
     </p>
+    <!-- SR-only input with label for accessiblity -->
     <input
       type="checkbox"
       class="sr-only"
       .checked=${!monthlyBilling()}
-      @click=${() => {
-        state.schedule = monthlyBilling() ? "yearly" : "monthly";
-      }}
+      @click=${() => (state.schedule = monthlyBilling() ? "yearly" : "monthly")}
     />
     <div
       class="flex items-center w-7 h-4 bg-blue-950 rounded-full mx-4 ${classMap(
