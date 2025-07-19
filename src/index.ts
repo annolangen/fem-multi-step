@@ -283,7 +283,7 @@ const pageHtml = () =>
       </div>
     </section>
     <div class="md:grow-1"></div>
-    <section class="flex flex-col mx-4 mt-[-40px] md:mt-0 bg-white rounded-lg">
+    <section class="flex flex-col mx-4 mt-[-40px] md:mt-0 bg-white rounded-lg md:grow-2">
       ${stepRenderers[state.step]!()}
       <div class="mb-4"></div>
       <div class="flex-grow"></div>
