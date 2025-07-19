@@ -64,44 +64,14 @@ type Addon = {
 };
 interface State {
   step: number;
+  validate_step?: number;
   name?: string;
   email?: string;
   phone?: string;
   schedule: Schedule;
-  plan?: Plan;
+  plan: Plan;
   addons: Addon[];
 }
-
-const state: State = { step: 1, schedule: "monthly", addons: [] };
-
-const monthlyBilling = () => state.schedule === "monthly";
-
-function labeledInputHtml(label: string, placeholder: string, key: string) {
-  function oninput(this: HTMLInputElement) {
-    state[key] = this.value;
-  }
-
-  return html`
-    <p class="mx-4 mt-4 font-semibold text-blue-950">${label}</p>
-    <input
-      class="mx-4 border rounded-sm p-2"
-      type="text"
-      placeholder=${placeholder}
-      @oninput=${oninput}
-    />
-  `;
-}
-
-const step1CardHtml = () =>
-  html` <h1 class="text-3xl mx-4 mt-4 font-bold text-blue-950">
-      Personal info
-    </h1>
-    <p class="mx-4 mt-4 text-xl text-gray-500">
-      Please provide your name, email address, and phone number.
-    </p>
-    ${labeledInputHtml("Name", "e.g. Stephen King", "name")}
-    ${labeledInputHtml("Email Address", "e.g. stephenking@lorem.com", "email")}
-    ${labeledInputHtml("Phone Number", "e.g. +1 234 567 890", "phone")}`;
 
 const plans: Plan[] = [
   {
@@ -123,6 +93,55 @@ const plans: Plan[] = [
     yearly: 150,
   },
 ];
+
+const state: State = {
+  step: 1,
+  schedule: "monthly",
+  addons: [],
+  plan: plans[0],
+  ...Object.fromEntries(new URLSearchParams(window.location.search)),
+};
+
+const monthlyBilling = () => state.schedule === "monthly";
+
+const mayAdvanceStep = () =>
+  state.step === 1
+    ? ["name", "email", "phone"].reduce((a, b) => a && !!state[b], true)
+    : state.step < 5;
+
+function labeledInputHtml(label: string, placeholder: string, key: string) {
+  return html`
+    <div class="flex flex-row justify-between">
+      <span class="mx-4 mt-4 font-semibold text-blue-950">${label}</span>
+      ${
+        state.validate_step != 1 || !!state[key]
+          ? null
+          : html`<span class="mx-4 mt-4 font-bold text-red-500"
+              >This field is required</span
+            >`
+      }
+      </div>
+      <input
+        class="mx-4 border rounded-sm p-2"
+        type="text"
+        placeholder=${placeholder}
+        value=${state[key] ?? ""}
+        @change=${e => (state[key] = e.target.value)}
+      />
+    </div>
+  `;
+}
+
+const step1CardHtml = () =>
+  html` <h1 class="text-3xl mx-4 mt-4 font-bold text-blue-950">
+      Personal info
+    </h1>
+    <p class="mx-4 mt-4 text-xl text-gray-500">
+      Please provide your name, email address, and phone number.
+    </p>
+    ${labeledInputHtml("Name", "e.g. Stephen King", "name")}
+    ${labeledInputHtml("Email Address", "e.g. stephenking@lorem.com", "email")}
+    ${labeledInputHtml("Phone Number", "e.g. +1 234 567 890", "phone")}`;
 
 const planHtml = (plan: Plan) =>
   html`<label class="cursor-pointer">
@@ -258,10 +277,22 @@ const pageHtml = () =>
         state.step > 4
           ? null
           : html`<section class="bg-white p-4 flex justify-end">
+              ${state.step === 1
+                ? null
+                : html`<button
+                      class="px-4 py-2 text-semibold"
+                      @click=${() => state.step--}
+                    >
+                      Go Back
+                    </button>
+                    <div class="flex-grow"></div>`}
               <button
                 class="bg-blue-950 text-white px-4 py-2 rounded-md"
                 @click=${() => {
-                  state.step++;
+                  state.validate_step = state.step;
+                  if (mayAdvanceStep()) {
+                    state.step++;
+                  }
                 }}
               >
                 Next Step
@@ -321,5 +352,5 @@ const page = html`
 `;
 
 const renderBody = () => render(pageHtml(), document.body);
-window.onchange = window.onclick = window.oninput = renderBody;
+window.onchange = window.onclick = renderBody;
 renderBody();
