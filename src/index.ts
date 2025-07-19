@@ -49,6 +49,8 @@ const proIcon = html`<svg
   </g>
 </svg>`;
 
+const stepTags = ["YOUR INFO", "SELECT PLAN", "ADD-ONS", "SUMMARY"];
+
 type Schedule = "monthly" | "yearly";
 type Plan = {
   [key in Schedule]: number;
@@ -153,7 +155,7 @@ const planHtml = (plan: Plan) =>
       @click=${() => (state.plan = plan)}
     />
     <div
-      class="mx-4 my-2 border rounded-lg flex flex-row border-grey-500 hover:border-purple-600 ${classMap(
+      class="mx-4 my-2 md:my-4 border rounded-lg flex flex-row md:flex-col border-grey-500 hover:border-purple-600 ${classMap(
         {
           "border-purple-600": state.plan === plan,
           "bg-blue-100": state.plan === plan,
@@ -210,13 +212,16 @@ const billingToggle = () =>
   </label>`;
 
 const step2CardHtml = () =>
-  html` <h1 class="text-3xl mx-4 mt-4 font-bold text-blue-950">
-      Select your plan
-    </h1>
+  html`<div class="flex flex-col">
+    <h1 class="text-3xl mx-4 mt-4 font-bold text-blue-950">Select your plan</h1>
     <p class="mx-4 mt-4 text-gray-500">
       You have the option of monthly or yearly billing.
     </p>
-    ${plans.map(planHtml)} ${billingToggle()}`;
+    <div class="flex flex-col md:grid md:grid-cols-3">
+      ${plans.map(planHtml)}
+    </div>
+    ${billingToggle()}
+  </div>`;
 
 const step3CardHtml = () =>
   html`<h1 class="text-3xl mx-4 mt-4 font-bold text-blue-950">
@@ -246,32 +251,41 @@ const stepRenderers = [
 ];
 
 const pageHtml = () =>
-  html` <main class="flex flex-col min-h-screen bg-blue-100">
-      <section
-        class="flex flex-row bg-cover bg-[url(../assets/images/bg-sidebar-mobile.svg)]"
-      >
-        <div class="m-auto pt-10 pb-20 text-blue-200 text-lg font-bold">
-          ${[1, 2, 3, 4].map(
-            n =>
-              html`<span
-                class="rounded-full border border-blue-200 m-4 px-3 py-2 ${classMap(
+  html` <main class="min-h-screen bg-blue-100 flex flex-col justify-start md:justify-center">
+  <div class="flex flex-col md:flex-row md:m-auto md:bg-white md:rounded-lg md:p-4 md:min-w-3/5">
+    <section
+      class="bg-cover md:bg-no-repeat bg-[url(../assets/images/bg-sidebar-mobile.svg)] md:bg-[url(../assets/images/bg-sidebar-desktop.svg)] md:rounded-lg"
+    >
+      <div class="m-auto pt-10 pb-20 flex flex-row md:flex-col justify-center">
+        ${[1, 2, 3, 4].map(
+          n =>
+            html` <div class="m-4 flex justify-left items-center gap-4">
+              <span
+                class="text-lg font-bold rounded-full border border-blue-200 px-4 py-2${classMap(
                   {
                     "bg-transparent": n !== state.step && state.step < 5,
                     "bg-blue-200":
                       n === state.step || (n === 4 && state.step > 4),
                     "text-black":
                       n === state.step || (n === 4 && state.step > 4),
+                    "text-blue-200": n !== state.step && state.step < 5,
                   }
                 )}"
-                >${n}</span
-              >`
-          )}
-        </div>
-      </section>
-      <section class="flex flex-col mx-4 mt-[-40px] bg-white rounded-lg">
-        ${stepRenderers[state.step]!()}
-        <div class="mb-4">
-      </section>
+              >
+                ${n}
+              </span>
+              <span class="hidden md:block">
+                <p class="text-grey-500">Step ${n}</p>
+                <p class="text-purple-200 font-bold">${stepTags[n - 1]}</p>
+              </span>
+            </div>`
+        )}
+      </div>
+    </section>
+    <div class="md:grow-1"></div>
+    <section class="flex flex-col mx-4 mt-[-40px] md:mt-0 bg-white rounded-lg">
+      ${stepRenderers[state.step]!()}
+      <div class="mb-4"></div>
       <div class="flex-grow"></div>
       ${
         state.step > 4
@@ -280,7 +294,7 @@ const pageHtml = () =>
               ${state.step === 1
                 ? null
                 : html`<button
-                      class="px-4 py-2 text-semibold"
+                      class="px-4 py-2 font-semibold"
                       @click=${() => state.step--}
                     >
                       Go Back
@@ -299,7 +313,9 @@ const pageHtml = () =>
               </button>
             </section>`
       }
-    </main>`;
+    </section>
+    <div class="md:grow-1"></div>
+  </main>`;
 
 const page = html`
   <!-- Sidebar start -->
