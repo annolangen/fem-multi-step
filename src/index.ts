@@ -1,4 +1,4 @@
-import { render, html, TemplateResult } from "lit-html";
+import { render, html, svg, TemplateResult } from "lit-html";
 import { classMap } from "lit-html/directives/class-map.js";
 
 const arcadeIcon = html`<svg
@@ -49,6 +49,25 @@ const proIcon = html`<svg
   </g>
 </svg>`;
 
+const thankYouIcon = html`<svg
+  xmlns="http://www.w3.org/2000/svg"
+  width="80"
+  height="80"
+  viewBox="0 0 80 80"
+>
+  <g fill="none">
+    <circle cx="40" cy="40" r="40" fill="#F9818E" />
+    <path
+      fill="#E96170"
+      d="M48.464 79.167c.768-.15 1.53-.321 2.288-.515a40.04 40.04 0 0 0 3.794-1.266 40.043 40.043 0 0 0 3.657-1.63 40.046 40.046 0 0 0 12.463-9.898A40.063 40.063 0 0 0 78.3 51.89c.338-1.117.627-2.249.867-3.391L55.374 24.698a21.6 21.6 0 0 0-15.332-6.365 21.629 21.629 0 0 0-15.344 6.365c-8.486 8.489-8.486 22.205 0 30.694l23.766 23.775Z"
+    />
+    <path
+      fill="#FFF"
+      d="M40.003 18.333a21.58 21.58 0 0 1 15.31 6.351c8.471 8.471 8.471 22.158 0 30.63-8.47 8.47-22.156 8.47-30.627 0-8.47-8.472-8.47-22.159 0-30.63a21.594 21.594 0 0 1 15.317-6.35Zm9.865 15c-.316.028-.622.15-.872.344l-12.168 9.13-5.641-5.642c-1.224-1.275-3.63 1.132-2.356 2.356l6.663 6.663c.56.56 1.539.63 2.173.156l13.326-9.995c1.122-.816.43-2.993-.956-3.013a1.666 1.666 0 0 0-.17 0Z"
+    />
+  </g>
+</svg>`;
+
 const stepTags = ["YOUR INFO", "SELECT PLAN", "ADD-ONS", "SUMMARY"];
 
 type Schedule = "monthly" | "yearly";
@@ -72,46 +91,63 @@ interface State {
   phone?: string;
   schedule: Schedule;
   plan: Plan;
-  addons: Addon[];
+  addons: Set<Addon>;
 }
 
-const plans: Plan[] = [
-  {
-    name: "Arcade",
-    icon: arcadeIcon,
-    monthly: 9,
-    yearly: 90,
-  },
-  {
-    name: "Advanced",
-    icon: advancedIcon,
-    monthly: 12,
-    yearly: 120,
-  },
-  {
-    name: "Pro",
-    icon: proIcon,
-    monthly: 15,
-    yearly: 150,
-  },
-];
+const plans: Plan[] = (() => {
+  const plan = (name: string, icon: TemplateResult, monthly: number): Plan => ({
+    name,
+    icon,
+    monthly,
+    yearly: monthly * 10,
+  });
+  return [
+    plan("Arcade", arcadeIcon, 9),
+    plan("Advanced", advancedIcon, 12),
+    plan("Pro", proIcon, 15),
+  ];
+})();
+
+const addons: Addon[] = (() => {
+  const addon = (name: string, description: string, monthly: number) => ({
+    name,
+    description,
+    monthly,
+    yearly: monthly * 10,
+  });
+  return [
+    addon("Online service", "Access to multiplayer games", 1),
+    addon("Larger storage", "Extra 1TB of cloud save", 2),
+    addon("Customizable profile", "Custom theme on your profile", 2),
+  ];
+})();
 
 const state: State = {
   step: 1,
   schedule: "monthly",
-  addons: [],
+  addons: new Set(),
   plan: plans[0],
   ...Object.fromEntries(new URLSearchParams(window.location.search)),
 };
 
 const monthlyBilling = () => state.schedule === "monthly";
 
+const moOrYr = () => (monthlyBilling() ? "mo" : "yr");
+
 const mayAdvanceStep = () =>
   state.step === 1
     ? ["name", "email", "phone"].reduce((a, b) => a && !!state[b], true)
     : state.step < 5;
 
+const total = () =>
+  addons
+    .filter(x => state.addons.has(x))
+    .reduce((a, b) => a + b[state.schedule], state.plan[state.schedule]);
+
 function labeledInputHtml(label: string, placeholder: string, key: string) {
+  function onchange(this: HTMLInputElement) {
+    state[key] = this.value;
+  }
   return html`
     <div class="flex flex-row justify-between">
       <span class="mx-4 mt-4 font-semibold text-blue-950">${label}</span>
@@ -128,7 +164,7 @@ function labeledInputHtml(label: string, placeholder: string, key: string) {
         type="text"
         placeholder=${placeholder}
         value=${state[key] ?? ""}
-        @change=${e => (state[key] = e.target.value)}
+        @change=${onchange}
       />
     </div>
   `;
@@ -166,7 +202,7 @@ const planHtml = (plan: Plan) =>
       <div class="flex flex-grow flex-col">
         <p class="mx-4 mt-4 font-semibold text-blue-950">${plan.name}</p>
         <p class="mx-4 text-gray-500">
-          &dollar;${plan[state.schedule]}/${monthlyBilling() ? "mo" : "yr"}
+          &dollar;${plan[state.schedule]}/${moOrYr()}
         </p>
         ${monthlyBilling() ? null : html`<p class="mx-4">2 months free</p>`}
       </div>
@@ -223,23 +259,105 @@ const step2CardHtml = () =>
     ${billingToggle()}
   </div>`;
 
+const addonHtml = (addon: Addon) => {
+  const isSelected = state.addons.has(addon);
+  return html`
+    <label
+      class="cursor-pointer flex flex-row items-center border border-purple-200 rounded-lg p-4 my-2 hover:border-purple-600 ${classMap(
+        {
+          "border-purple-600": isSelected,
+          "bg-blue-100": isSelected,
+        }
+      )}"
+    >
+      <input
+        type="checkbox"
+        class="w-5 h-5 accent-purple-600"
+        .checked=${isSelected}
+        @click=${() => {
+          if (isSelected) {
+            state.addons.delete(addon);
+          } else {
+            state.addons.add(addon);
+          }
+        }}
+      />
+      <div class="ml-4 flex-grow">
+        <p class="font-semibold text-blue-950">${addon.name}</p>
+        <p class="text-gray-500 text-sm">${addon.description}</p>
+      </div>
+      <p class="text-purple-600">
+        +&dollar;${addon[state.schedule]}/${moOrYr()}
+      </p>
+    </label>
+  `;
+};
+
 const step3CardHtml = () =>
-  html`<h1 class="text-3xl mx-4 mt-4 font-bold text-blue-950">
-    Pick add-ons
-  </h1>`;
+  html`<div class="flex flex-col">
+    <h1 class="text-3xl mx-4 mt-4 font-bold text-blue-950">Pick add-ons</h1>
+    <p class="mx-4 mt-4 text-gray-500">
+      Add-ons help enhance your gaming experience.
+    </p>
+    <div class="flex flex-col mx-4">${addons.map(addonHtml)}</div>
+  </div>`;
 
 const step4CardHtml = () =>
-  html`<h1 class="text-3xl mx-4 mt-4 font-bold text-blue-950">
-    Finishing up
-  </h1> `;
+  html`<div class="flex flex-col">
+    <h1 class="text-3xl mx-4 mt-4 font-bold text-blue-950">Finishing up</h1>
+    <p class="mx-4 mt-4 text-gray-500">
+      Double-check everything looks OK before confirming.
+    </p>
+    <div class="flex flex-col m-4">
+      <div class="bg-blue-100 rounded-t-lg p-4 flex flex-row justify-between">
+        <div class="flex flex-col">
+          <p class="font-semibold text-blue-950">
+            ${state.plan.name} (${monthlyBilling() ? "Monthly" : "Yearly"})
+          </p>
+          <a class="text-gray-500">Change</a>
+        </div>
+        <span class="text-blue-950"
+          >&dollar;${state.plan[state.schedule]}/${moOrYr()}</span
+        >
+      </div>
+      <div class="bg-blue-100 rounded-b-lg p-4 flex flex-row justify-between">
+        <div class="flex flex-col text-gray-500 w-1/1">
+          ${addons
+            .filter(addon => state.addons.has(addon))
+            .map(
+              addon =>
+                html` <div class="flex flex-row justify-between w-1/1">
+                  <div>${addon.name}</div>
+                  <div class="text-blue-950">
+                    +&dollar;${addon[state.schedule]}/${moOrYr()}
+                  </div>
+                </div>`
+            )}
+        </div>
+      </div>
+      <div class="p-4 flex flex-row justify-between w-1/1">
+        <div class="text-gray-500">
+          Total (per ${monthlyBilling() ? "month" : "year"})
+        </div>
+        <div class="text-purple-600 font-semibold">
+          +&dollar;${total()}/${moOrYr()}
+        </div>
+      </div>
+    </div>
+  </div>`;
 
 const step5CardHtml = () =>
-  html`<h1 class="text-3xl mx-4 mt-4 font-bold text-blue-950">Thank you!</h1>
-    <p class="mx-4 mt-4 text-xl text-gray-500">
+  html`<div class="flex flex-col items-center h-[40vh] md:h-1/1">
+    <div class="grow-1"></div>
+    ${thankYouIcon}
+    <h1 class="text-3xl mx-4 mt-4 font-bold text-blue-950">Thank you!</h1>
+    <p class="mx-4 mt-4 text-gray-500 text-center md:w-md">
       Thanks for confirming your subscription! We hope you have fun using our
       platform. If you ever need support, please feel free to email us at
       support@loremgaming.com.
-    </p>`;
+    </p>
+    <div class="grow-1"></div>
+  </div>`;
 
 const stepRenderers = [
   null,
